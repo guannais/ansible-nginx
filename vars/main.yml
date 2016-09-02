@@ -1,0 +1,5 @@
+---
+# vars file for nginx
+nginx_major_version: "1"
+nginx_minor_version: "10.1"
+nginx_url: "http://nginx.org/download/nginx-{{ nginx_major_version }}.{{ nginx_minor_version }}.tar.gz"
