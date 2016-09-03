@@ -1,2 +1,6 @@
 ---
 # defaults file for nginx
+nginx_major_version: "1"
+nginx_minor_version: "10.1"
+nginx_version: "{{ nginx_major_version }}.{{ nginx_minor_version }}"
+nginx_url: "http://nginx.org/download/{{ nginx-nginx_version }}.tar.gz"
