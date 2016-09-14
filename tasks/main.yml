@@ -60,6 +60,15 @@
 - name: "Check - NGINX Install Dir"
   stat: "path=/etc/nginx"
   register: nginx_install_dir
+- name: "Check - /var/www Dir"
+  stat: "path=/etc/nginx"
+  register: nginx_varwww_dir
+- name: "Check - /etc/nginx/sites-enabled Dir"
+  stat: "path=/etc/nginx/sites-enable"
+  register: nginx_sitesenable_dir
+- name: "Check - /etc/nginx/sites-available Dir"
+  stat: "path=/etc/nginx"
+  register: nginx_sitesavailable_dir
 - name: "Check if NGINX is running"
   command: service nginx status
   ignore_errors: yes
@@ -79,6 +88,30 @@
     owner: "root"
     group: "root"
   when: not nginx_install_dir.stat.exists
+- name: "Create /var/www directory"
+  file: 
+    path: "/var/www/"
+    state: "directory"
+    mode: "0755"
+    owner: "www-data"
+    group: "www-data"
+  when: not nginx_varwww_dir.stat.exists
+- name: "Create sites-enable directory"
+  file: 
+    path: "/etc/nginx/sites-enabled"
+    state: "directory"
+    mode: "0755"
+    owner: "root"
+    group: "root"
+  when: not nginx_sitesenable_dir.stat.exists
+- name: "Create sites-enable available"
+  file: 
+    path: "/etc/nginx/sites-available"
+    state: "directory"
+    mode: "0755"
+    owner: "root"
+    group: "root"
+  when: not nginx_sitesavailable_dir.stat.exists
 - name: "Extract NGINX"
   unarchive: 
     src: "/usr/local/src/nginx-{{ nginx_version }}.tar.gz"
@@ -93,7 +126,7 @@
 - name: "Replace Server Version"
   replace: "dest=/usr/local/src/nginx-{{ nginx_version }}/src/http/ngx_http_header_filter_module.c regexp='\"Server: \" NGINX_VER CRLF;' replace='\"Server: s|ngular\" CRLF;'"
 - name: "Compile NGINX"
-  command: "./configure --user=nginx --group=nginx --sbin-path=/usr/sbin/nginx --conf-path=/etc/nginx/nginx.conf --error-log-path=/var/log/nginx/error.log --http-log-path=/var/log/nginx/access.log --pid-path=/var/run/nginx.pid --with-select_module --with-poll_module --with-file-aio --with-ipv6 --with-http_ssl_module --with-http_realip_module --with-http_addition_module --with-http_xslt_module --with-http_image_filter_module --with-http_geoip_module --with-http_sub_module --with-http_dav_module --with-http_flv_module --with-http_mp4_module --with-http_gunzip_module --with-http_gzip_static_module --with-http_auth_request_module --with-http_random_index_module --with-http_secure_link_module --with-http_degradation_module --with-http_stub_status_module --with-http_perl_module --with-mail --with-mail_ssl_module --with-cpp_test_module --with-pcre --with-pcre-jit --with-md5-asm --with-sha1-asm --with-libatomic --with-debug --with-ld-opt='-Wl,-E' chdir=/usr/local/src/nginx-{{ nginx_version }}/"
+  command: "./configure --user=www-data --group=www-data --sbin-path=/usr/sbin/nginx --conf-path=/etc/nginx/nginx.conf --error-log-path=/var/log/nginx/error.log --http-log-path=/var/log/nginx/access.log --pid-path=/var/run/nginx.pid --with-select_module --with-poll_module --with-file-aio --with-ipv6 --with-http_ssl_module --with-http_realip_module --with-http_addition_module --with-http_xslt_module --with-http_image_filter_module --with-http_geoip_module --with-http_sub_module --with-http_dav_module --with-http_flv_module --with-http_mp4_module --with-http_gunzip_module --with-http_gzip_static_module --with-http_auth_request_module --with-http_random_index_module --with-http_secure_link_module --with-http_degradation_module --with-http_stub_status_module --with-http_perl_module --with-mail --with-mail_ssl_module --with-cpp_test_module --with-pcre --with-pcre-jit --with-md5-asm --with-sha1-asm --with-libatomic --with-debug --with-ld-opt='-Wl,-E' chdir=/usr/local/src/nginx-{{ nginx_version }}/"
   when: not nginx_binary_file.stat.exists
 - name: "Make install NGINX"
   command: "make install chdir=/usr/local/src/nginx-{{ nginx_version }}/"
@@ -118,6 +151,14 @@
     mode: "0755"
   become: "yes"
   notify: NGINX service restart
+- name: "Copy example index file"
+  copy: 
+    src: "files/index.html"
+    dest: "/var/www/index.html"  
+    owner: "www-data"
+    group: "www-data"
+    mode: "755"
+    backup: "no"
 - name: "Create NGINX create service"
   command:
     update-rc.d nginx defaults
